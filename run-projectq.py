@@ -42,6 +42,10 @@ for parameter in sys.argv:
 
 #=======================================#
 
+gRegisters      = {}
+simulator1      = Simulator()
+engine1         = MainEngine(backend=simulator1)
+
 gQuantumCircuit = QuantumCircuit.from_qasm_file(gQasmFilename)
 gateCounts      = 0
 gCircuitQubits  = gQuantumCircuit.num_qubits
@@ -50,17 +54,20 @@ gCircuitGates   = gQuantumCircuit.count_ops()
 
 
 
-print("\n==============================")
 
+print("")
+print("======================================================================")
 print("INFO: QUBITS: " + str(gCircuitQubits))
 print("INFO: DEPTH : " + str(gCircuitDepth))
-print("INFO: CIRCUIT:")
+
+
+print("")
+print("======================================================================")
 print(gQuantumCircuit)
 
-gRegisters = {}
-simulator1 = Simulator()
-engine1    = MainEngine(backend=simulator1)
 
+print("")
+print("======================================================================")
 print("INFO: QREGS: ", gQuantumCircuit.qregs)
 for qreg in gQuantumCircuit.qregs:
   qregSize = qreg.size
@@ -84,9 +91,12 @@ for gate in gQuantumCircuit.data:
   gateNumQubits = gate.operation.num_qubits
   gateNumClbits = gate.operation.num_clbits
 
-  print()
-  print(gate)
-  print(f"GATE: name={gateName}, qubits={gateNumQubits}, clbits={gateNumClbits}")
+  #print(gate)
+  print("")
+  print("Gate Name      : " + gateName)
+  print("No. of Qubits  : " + str(gateNumQubits))
+  print("No. of Clbits  : " + str(gateNumClbits))
+
   if gateName.lower() == "cx" or gateName.lower == "cnot":
     controlQubit        = gate.qubits[0] 
     controlQubitRegName = gQuantumCircuit.find_bit(controlQubit)[1][0][0].name
@@ -101,10 +111,13 @@ for gate in gQuantumCircuit.data:
     print("TARGET  : ", targetQubitRegName , targetQubitIndex )
     C(X) | (gRegisters[controlQubitRegName][controlQubitIndex], gRegisters[targetQubitRegName][targetQubitIndex])
   elif gateName.lower() == "h":
-    print("H GATE")
     qubit        = gate.qubits[0] 
     qubitRegName = gQuantumCircuit.find_bit(qubit)[1][0][0].name
     qubitIndex   = gQuantumCircuit.find_bit(qubit)[0]
+
+    print("Qubit Reg Name : " + qubitRegName)
+    print("Qubit Index    : " + str(qubitIndex))
+
     H | gRegisters[qubitRegName][qubitIndex] 
   else:
     print("Unkown GATE")

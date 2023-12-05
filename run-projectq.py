@@ -74,18 +74,39 @@ for qreg in gQuantumCircuit.qregs:
   qregName = qreg.name
   gRegisters[qregName] = engine1.allocate_qureg(qregSize)
 
-"""
-for creg in gQuantumCircuit.cregs:
-  cregSize = creg.size
-  cregName = creg.name
-  gRegisters[cregName] = engine1.allocate_qureg(cregSize)
-"""
+
 
 for reg in gRegisters:
   print(reg, gRegisters[reg])
 
 
-print("INFO: CREGS: ", gQuantumCircuit.cregs)
+
+print("")
+print("======================================================================")
+
+qasmOneQubitGateLabels = [ 
+"u3"  ,
+"u"   ,
+"u2"  ,
+"rx"  ,
+"ry"  ,
+"u1"  ,
+"p"   ,
+"rz"  ,
+"u0"  ,
+"id"  ,
+"t"   , 
+"tdg" ,
+"s"   ,
+"sdg" ,
+"z"   ,
+"x"   ,
+"y"   ,
+"h"   ,
+"sx"  ,
+"sxdg",
+]
+
 for gate in gQuantumCircuit.data:
   gateName      = gate.operation.name
   gateNumQubits = gate.operation.num_qubits
@@ -97,6 +118,20 @@ for gate in gQuantumCircuit.data:
   print("No. of Qubits  : " + str(gateNumQubits))
   print("No. of Clbits  : " + str(gateNumClbits))
 
+  if gateName.lower() in qasmOneQubitGateLabels:
+    qubit        = gate.qubits[0] 
+    qubitRegName = gQuantumCircuit.find_bit(qubit)[1][0][0].name
+    qubitIndex   = gQuantumCircuit.find_bit(qubit)[0]
+
+    print("Qubit Reg Name : " + qubitRegName)
+    print("Qubit Index    : " + str(qubitIndex))
+    print("One Qubit Gate!")
+
+    H | gRegisters[qubitRegName][qubitIndex] 
+  else:
+    print("Unkown GATE")
+
+'''
   if gateName.lower() == "cx" or gateName.lower == "cnot":
     controlQubit        = gate.qubits[0] 
     controlQubitRegName = gQuantumCircuit.find_bit(controlQubit)[1][0][0].name
@@ -111,16 +146,10 @@ for gate in gQuantumCircuit.data:
     print("TARGET  : ", targetQubitRegName , targetQubitIndex )
     C(X) | (gRegisters[controlQubitRegName][controlQubitIndex], gRegisters[targetQubitRegName][targetQubitIndex])
   elif gateName.lower() == "h":
-    qubit        = gate.qubits[0] 
-    qubitRegName = gQuantumCircuit.find_bit(qubit)[1][0][0].name
-    qubitIndex   = gQuantumCircuit.find_bit(qubit)[0]
+'''  
 
-    print("Qubit Reg Name : " + qubitRegName)
-    print("Qubit Index    : " + str(qubitIndex))
-
-    H | gRegisters[qubitRegName][qubitIndex] 
-  else:
-    print("Unkown GATE")
+print("")
+print("======================================================================")
 
 for regGroup in gRegisters:
   All(Measure) | gRegisters[regGroup]

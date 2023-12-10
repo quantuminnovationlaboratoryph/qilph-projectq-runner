@@ -1,5 +1,7 @@
 from projectq          import MainEngine
 from projectq.backends import Simulator
+from projectq.ops      import *
+'''
 from projectq.ops      import (
     CNOT,
     QFT,
@@ -28,280 +30,146 @@ from projectq.ops      import (
     Z,
     get_inverse,
 )
+'''
  
-import sys
-from qiskit import *
+#import sys
+#from qiskit import *
 
-#=======================================#
+runExamples =[1,2]
 
-gQasmFilename = ""
+#==================================================================================================#
+# Example 1: Engine, circuit, and gate usage.
+#==================================================================================================#
 
-for parameter in sys.argv:
-  if parameter.endswith(".qasm"):
-    gQasmFilename = parameter
+def Example_001(index):
+  engine0 = MainEngine()              # MainEngine is called the compiler.
+  qbit1   = engine0.allocate_qubit()  # Allocate a single qubit, called 'qbit1', to the compiler.
+  H       | qbit1                     # Apply the 'H' gate to qubit 'qbit1'.
+  Measure | qbit1                     # Apply the 'Measure' gate to qubit 'qbit1'.
+  engine0.flush()                     # Flush means to send all the instruction to the compiler.
 
-#=======================================#
+  print("")
+  print("==================================================")
+  print("Example 1, Run " + str(index))
+  print("==================================================")
+  print(f"qbit1  type: {type(qbit1)}")
+  print(f"qbit1 value: {int(qbit1)}")  # Apply the 'int' function to a qubit type to get the value.
 
-gRegisters      = {}
-simulator1      = Simulator()
-engine1         = MainEngine(backend=simulator1)
-
-gQuantumCircuit = QuantumCircuit.from_qasm_file(gQasmFilename)
-gateCounts      = 0
-gCircuitQubits  = gQuantumCircuit.num_qubits
-gCircuitDepth   = gQuantumCircuit.depth()
-gCircuitGates   = gQuantumCircuit.count_ops()
-
-
-
-
-print("")
-print("======================================================================")
-print("INFO: QUBITS: " + str(gCircuitQubits))
-print("INFO: DEPTH : " + str(gCircuitDepth))
+# End of Example_001
 
 
-print("")
-print("======================================================================")
-print(gQuantumCircuit)
+#==================================================================================================#
+# Example 2: Flushing and getting qubit amplitudes.
+#==================================================================================================#
+
+def Example_002(index):
+  engine0 = MainEngine()              # Compiler = Circuit + Simulator
+  qbit1   = engine0.allocate_qubit()  # Add the qubit 'qbit1' to the circuit.
+  H       | qbit1                     # Add the 'H' gate to 'qbit1'. 
+  engine0.flush()                     # Flush. Send all instructions to the engine (simulator).
+
+  ampl_h0 = engine0.backend.get_amplitude('0', qbit1) # Get the amplitude for qbit1's |0>.
+  ampl_h1 = engine0.backend.get_amplitude('1', qbit1) # Get the amplitude for qbit1's |1>.
+
+  Measure | qbit1 # Add the 'Measure' gate to 'qbit1'.
+  engine0.flush() # Flush. Simulate up to this point.
+
+  ampl_m0 = engine0.backend.get_amplitude('0', qbit1) # Get the amplitude for qbit1's |0>.
+  ampl_m1 = engine0.backend.get_amplitude('1', qbit1) # Get the amplitude for qbit1's |1>.
+
+  print("")
+  print("==================================================")
+  print("Example 2, Run " + str(index))
+  print("==================================================")
+  print(f"Amplitude for |0> (after H, before Measure) : {ampl_h0}")
+  print(f"Amplitude for |1> (after H, before Measure) : {ampl_h1}")
+  print(f"Amplitude for |0> (after Measure and flush) : {ampl_m0}")
+  print(f"Amplitude for |1> (after Measure and flush) : {ampl_m1}")
+
+# End of Example_002
 
 
-print("")
-print("======================================================================")
-print("INFO: QREGS: ", gQuantumCircuit.qregs)
-for qreg in gQuantumCircuit.qregs:
-  qregSize = qreg.size
-  qregName = qreg.name
-  gRegisters[qregName] = engine1.allocate_qureg(qregSize)
-  print(qreg)
+#==================================================================================================#
+# Example  3: Quantum register, Simulator, and the 'All' gate
+#==================================================================================================#
+
+def Example_003(index):
+  sim0 = Simulator()              # A default simulator that uses default simulation properties.
+  eng0 = MainEngine(backend=sim0) # Create the compiler with 'sim0' as simulator.
+  qreg = eng0.allocate_qureg(5)   # Create the 'qreg' 3-qubit quantum register.
+
+  All(H)       | qreg # Add the 'H' gate to all qubits in the 'qreg' register.
+  All(Measure) | qreg # Add the 'Measure' gate to all qubits in the 'qreg' register.
+  eng0.flush()        # Flush. Perform the simulation up to this point.
+
+  print("")
+  print("==================================================")
+  print("Example 3, Run " + str(index))
+  print("==================================================")
+  for i in range(5):
+    print(f"qreg[{i}] = " + str(int(qreg[i])) )
+  
+# End of Example_003
 
 
+#==================================================================================================#
+# Example  4: Simulator's random seed (rnd_seed)
+#==================================================================================================#
 
-for reg in gRegisters:
-  print(reg, gRegisters[reg])
+def Example_004(index):
+  sim1  = Simulator()              # 'sim1' rnd_seed is actually randomly generated.
+  eng1  = MainEngine(backend=sim1) # 'eng1' will use 'sim1' with random seed.
+  qreg1 = eng1.allocate_qureg(5)   # Allocate 5-qubit register to 'eng1'.
+  All(H)       | qreg1             # Apply the 'H' gate to all qubits in 'qreg1'.
+  All(Measure) | qreg1             # Apply the 'Measure' gate to all qubits in 'qreg1'.
+  eng1.flush()                     # Flush.
+
+  sim2  = Simulator(rnd_seed=10)   # 'sim2' rnd_seed is set to '10'.
+  eng2  = MainEngine(backend=sim2) # 'eng2' will use 'sim2' with a fixed seed.
+  qreg2 = eng2.allocate_qureg(5)   # Allocate 5-qubit register to 'eng2'.
+  All(H)       | qreg2             # Apply the 'H' gate to all qubits in 'qreg2'.
+  All(Measure) | qreg2             # Apply the 'Measure' gate to all qubits in 'qreg2'.
+  eng2.flush()                     # Flush.
+
+  print("")
+  print("==================================================")
+  print("Example 4, Run " + str(index))
+  print("==================================================")
+  qreg1Str = ""
+  qreg2Str = ""
+  for i in range(5):
+    qreg1Str += "0" if ( int(qreg1[i]) == 0 ) else "1"
+    qreg2Str += "0" if ( int(qreg2[i]) == 0 ) else "1"
+  print("qreg1 = " + qreg1Str)
+  print("qreg2 = " + qreg2Str)
+
+# End of Example_004
 
 
+#==================================================================================================#
+# Run examples here
+#==================================================================================================#
 
-print("")
-print("======================================================================")
-
-qasmOneQubitGateLabels = [ 
-"u3"  ,
-"u"   ,
-"u2"  ,
-"rx"  ,
-"ry"  ,
-"u1"  ,
-"p"   ,
-"rz"  ,
-"u0"  ,
-"id"  ,
-"t"   , 
-"tdg" ,
-"s"   ,
-"sdg" ,
-"z"   ,
-"x"   ,
-"y"   ,
-"h"   ,
-"sx"  ,
-"sxdg",
+examplesToRun = [
+[Example_001, 1],
+[Example_002, 1],
+[Example_003, 1],
+[Example_004, 10],
 ]
 
-for gate in gQuantumCircuit.data:
-  gateName      = gate.operation.name
-  gateNumQubits = gate.operation.num_qubits
-  gateNumClbits = gate.operation.num_clbits
+for example in examplesToRun:
+  example_function = example[0]
+  example_repeat   = example[1]
+  for i in range(example_repeat):
+    example_function(i+1)
 
-  #print(gate)
-  print("")
-  print("Gate Name      : " + gateName)
-  print("No. of Qubits  : " + str(gateNumQubits))
-  print("No. of Clbits  : " + str(gateNumClbits))
-
-  if gateName.lower() in qasmOneQubitGateLabels:
-    qubit        = gate.qubits[0] 
-    qubitRegName = gQuantumCircuit.find_bit(qubit)[1][0][0].name
-    qubitIndex   = gQuantumCircuit.find_bit(qubit)[0]
-
-    print("QUBIT          : ", qubit)
-    print("Qubit Reg Name : " + qubitRegName)
-    print("Qubit Index    : " + str(qubitIndex))
-    print("One Qubit Gate!")
-
-    #H | gRegisters[qubitRegName][qubitIndex] 
-  else:
-    print("Unknown 1-Qubit Gate.")
-
-'''
-  if gateName.lower() == "cx" or gateName.lower == "cnot":
-    controlQubit        = gate.qubits[0] 
-    controlQubitRegName = gQuantumCircuit.find_bit(controlQubit)[1][0][0].name
-    controlQubitIndex   = gQuantumCircuit.find_bit(controlQubit)[0]
-
-    targetQubit         = gate.qubits[1]
-    targetQubitRegName  = gQuantumCircuit.find_bit(targetQubit)[1][0][0].name
-    targetQubitIndex    = gQuantumCircuit.find_bit(targetQubit)[0]
-    
-    print("CX GATE")
-    print("CONTROL : ", controlQubitRegName, controlQubitIndex)
-    print("TARGET  : ", targetQubitRegName , targetQubitIndex )
-    C(X) | (gRegisters[controlQubitRegName][controlQubitIndex], gRegisters[targetQubitRegName][targetQubitIndex])
-  elif gateName.lower() == "h":
-'''  
-
-print("")
-print("======================================================================")
-
-for regGroup in gRegisters:
-  All(Measure) | gRegisters[regGroup]
-engine1.flush()
-
-print("\n==============================")
-observedString = ""
-for regGroup in gRegisters:
-  print("")
-  print("REGISTER GROUP: ", regGroup)
-  for index in range(0, len(gRegisters[regGroup])):
-    observedString += str(int(gRegisters[regGroup][index]))
-    print(f"Index = {index}, value = {int(gRegisters[regGroup][index])}")
-   # print("value ", int(gRegisters[regGroup][reg]))
-#    print(f"GROUP: {regGroup}, INDEX: {reg}, VALUE: ", gRegisters[regGroup])
-#    print(f"GROUP: {regGroup}, INDEX: {reg}, VALUE: ", type(gRegisters[regGroup]))
-#    print(f"GROUP: {regGroup}, INDEX: {reg}, VALUE: ", int(gRegisters[regGroup][0]))
-#    print(f"GROUP: {regGroup}, INDEX: {reg}, VALUE: ", int(gRegisters[regGroup][1]))
-print("Observed String: ", observedString)
-print("==============================\n")
-
-#=======================================#
-
-engine0 = MainEngine()
-qbit1   = engine0.allocate_qubit()
-
-H       | qbit1
-Measure | qbit1
-
-engine0.flush()
-
-print("\n==============================")
-print(f"qbit1 type: {type(qbit1)}")
-print(f"qbit1  int: {int(qbit1)}")
-print("==============================\n")
-
-
-#=======================================#
-
-engine0 = MainEngine()
-qbit1   = engine0.allocate_qubit()
-ampl_a0  = engine0.backend.get_amplitude('0', qbit1)
-ampl_b0  = engine0.backend.get_amplitude('1', qbit1)
-H       | qbit1
-ampl_a1  = engine0.backend.get_amplitude('0', qbit1)
-ampl_b1  = engine0.backend.get_amplitude('1', qbit1)
-engine0.flush()
-ampl_a2  = engine0.backend.get_amplitude('0', qbit1)
-ampl_b2  = engine0.backend.get_amplitude('1', qbit1)
-Measure | qbit1
-ampl_a3 = engine0.backend.get_amplitude('0', qbit1)
-ampl_b3 = engine0.backend.get_amplitude('1', qbit1)
-
-print("\n==============================")
-print(f"qbit1 type: {type(qbit1)}")
-print(f"qbit1  int: {int(qbit1)}")
-print(f"ampl_a0  : {ampl_a0}")
-print(f"ampl_b0  : {ampl_b0}")
-print(f"ampl_a1  : {ampl_a1}")
-print(f"ampl_b1  : {ampl_b1}")
-print(f"ampl_a2  : {ampl_a2}")
-print(f"ampl_b2  : {ampl_b2}")
-print(f"ampl_a3  : {ampl_a3}")
-print(f"ampl_b3  : {ampl_b3}")
-print("==============================\n")
-
-
-#=======================================#
-
-qubitCount = 3
-simulator1 = Simulator()
-engine1    = MainEngine(backend=simulator1)
-qreg       = engine1.allocate_qureg(qubitCount)
-
-All(H)       | qreg
-All(Measure) | qreg
-engine1.flush()
-
-print("\n==============================")
-print(f"qreg     type: {type(qreg)}")
-print(f"qreg[0]  type: {type(qreg[0])}")
-print(f"qreg[0]   int: {int(qreg[0])}")
-print(f"qreg[1]   int: {int(qreg[1])}")
-print(f"qreg[2]   int: {int(qreg[2])}")
-print("==============================\n")
-
-
-#============================#
-# Engine = Simulator Backend #
-#============================#
-
-#eng = MainEngine(backend=UnitarySimulator())
-
-eng = MainEngine(backend=Simulator())
-# This is the same as MainEngine()
-
-# With specified randomization seed or repeatability
-#eng = MainEngine(backend=Simulator(rnd_seed=10))
-
-
-simulator1 = Simulator()
-simulator2 = Simulator(rnd_seed=10)
-
-engine0    = MainEngine()
-engine1    = MainEngine(backend=simulator1)
-engine2    = MainEngine(backend=simulator2)
-
-#========#
-# Qubits #
-#========#
-
-# qubit = eng.allocate_qubit()  # allocate 1 qubit
-qubitCount = 5
-qreg       = engine2.allocate_qureg(qubitCount)
-
-print(qreg)
+print()
 
 
 
-#======================#
-# Operator Application #
-#======================#
-
-# H | qubit  # apply a Hadamard gate
-# NOT | qubit
-# Measure | qubit  # measure the qubit
-
-H | qreg[0]
-H | qreg[1]
-H | qreg[2]
-H | qreg[3]
-H | qreg[4]
-
-#All(H)       | qreg
-All(Measure) | qreg
 
 
-eng.flush()  # flush all gates (and execute measurements)
-#print(f"Measured {int(qubit)}")  # output measurement result
-print("QREG: ", int(qreg[0]))
-print("QREG: ", int(qreg[1]))
-print("QREG: ", int(qreg[2]))
-print("QREG: ", int(qreg[3]))
-print("QREG: ", int(qreg[4]))
-print("QREG TYPE: ", type(qreg[4]))
-print(f"Measured {int(qreg[0])}")  # output measurement result
-print(f"Measured {int(qreg[1])}")  # output measurement result
-print(f"Measured {int(qreg[2])}")  # output measurement result
-print(f"Measured {int(qreg[3])}")  # output measurement result
-print(f"Measured {int(qreg[4])}")  # output measurement result
+
 
 
 

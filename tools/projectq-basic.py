@@ -1,41 +1,7 @@
 from projectq          import MainEngine
 from projectq.backends import Simulator
 from projectq.ops      import *
-'''
-from projectq.ops      import (
-    CNOT,
-    QFT,
-    All,
-    Barrier,
-    BasicMathGate,
-    C,
-    Entangle,
-    H,
-    Measure,
-    Ph,
-    QubitOperator,
-    Rx,
-    Ry,
-    Rz,
-    S,
-    SqrtSwap,
-    SqrtX,
-    Swap,
-    T,
-    Tensor,
-    TimeEvolution,
-    Toffoli,
-    X,
-    Y,
-    Z,
-    get_inverse,
-)
-'''
- 
-#import sys
-#from qiskit import *
 
-runExamples =[1,2]
 
 #==================================================================================================#
 # Example 1: Engine, circuit, and gate usage.
@@ -147,14 +113,43 @@ def Example_004(index):
 
 
 #==================================================================================================#
+# Example  5: Simulator's random seed (rnd_seed)
+#==================================================================================================#
+
+def Example_005(index):
+  sim  = Simulator()              # 'sim' rnd_seed is actually randomly generated.
+  eng  = MainEngine(backend=sim) # 'eng' will use 'sim' with random seed.
+  qreg = eng.allocate_qureg(5)   # Allocate 5-qubit register to 'eng'.
+  All(H)       | qreg             # Apply the 'H' gate to all qubits in 'qreg'.
+  eng.flush()                     # Flush.
+  stateVector = eng.backend.cheat() 
+  All(Measure) | qreg             # Apply the 'Measure' gate to all qubits in 'qreg'.
+  eng.flush()                     # Flush.
+
+  print("")
+  print("==================================================")
+  print("Example 5, Run " + str(index))
+  print("==================================================")
+  print(stateVector)
+  print(str(bin(10)))
+
+# End of Example_005
+
+
+#==================================================================================================#
 # Run examples here
 #==================================================================================================#
 
+# Comment out the line of the example to not run it.
+# Or, set the 're
+
 examplesToRun = [
-[Example_001, 1],
-[Example_002, 1],
-[Example_003, 1],
-[Example_004, 10],
+#[Example_xyz, n], 
+ [Example_001, 1],
+ [Example_002, 1],
+ [Example_003, 1],
+ [Example_004, 1],
+ [Example_005, 1],
 ]
 
 for example in examplesToRun:

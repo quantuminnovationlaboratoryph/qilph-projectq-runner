@@ -237,7 +237,7 @@ for gate in gQuantumCircuit.data:
     print("Qubit Index    : " + str(qubitIndex))
 
     # Case A: You need to define a matrix to accomodate the u-gate parameters.
-    if gateName.lower() in ["u3", "u", "u2", "u1"]:
+    if gateName in ["u3", "u", "u2", "u1"]:
 
       if   len(gateParams) == 3:
          gateParams2 = (gateParams[0], gateParams[1], gateParams[2], thres)

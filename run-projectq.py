@@ -175,69 +175,80 @@ thres = 0.0000000001
 print("Hadmard Matrix from U3:\n", qasmU3Matrix(math.pi/2.0, 0, math.pi, thres), "\n")
 print("NOT Matrix from U3:\n", qasmU3Matrix(math.pi, 0, math.pi, thres), "\n")
 
+idGate = MatrixGate([[1,0],
+                     [0,1]])
+
+SqrtXdag = get_inverse(SqrtX)
+
 qasmGateToProjectQ = {
-"u3"   : MatrixGate,
-"u"    : X,
-"u2"   : X,
-"rx"   : X,
-"ry"   : X,
-"u1"   : X,
-"p"    : X,
-"rz"   : X,
-"u0"   : X,
-"id"   : X,
-"t"    : X,
-"tdg"  : X,
-"s"    : X,
-"sdg"  : X,
-"z"    : X,
-"x"    : X,
-"y"    : X,
-"h"    : H,
-"sx"   : X,
-"sxdg" : X,
+"u3"      : MatrixGate,
+"u"       : MatrixGate,
+"u2"      : MatrixGate,
+"rx"      :         Rx,
+"ry"      :         Ry,
+"u1"      : MatrixGate,
+"p"       :         Ph,
+"rz"      :         Rz,
+"u0"      :     idGate, #
+"id"      :     idGate, #
+"t"       :          T, 
+"tdg"     :       Tdag, 
+"s"       :          S, 
+"sdg"     :       Sdag,
+"z"       :          Z, 
+"x"       :          X, 
+"y"       :          Y, 
+"h"       :          H, 
+"sx"      :      SqrtX,
+"sxdg"    :   SqrtXdag, #
+"barrier" :    Barrier,
+"measure" :    Measure,
 }
 
 gate = MatrixGate([[0, 1], [1, 0]])
 
 for gate in gQuantumCircuit.data:
-  gateName      = gate.operation.name
+  gateName      = gate.operation.name.lower()
   gateParams    = gate.operation.params
   gateNumQubits = gate.operation.num_qubits
   gateNumClbits = gate.operation.num_clbits
 
-  print("")
-  print(gate)
+
+  # For Debugging
+  if gateName in ["barrier", "measure"]:
+    continue
+
+  print("\n")
   print("Gate Name      : " + gateName)
   print("Gate Parameters: " + str(gateParams))
   print("No. of Qubits  : " + str(gateNumQubits))
   print("No. of Clbits  : " + str(gateNumClbits))
   
+  if gateName in qasmOneQubitGateLabels:
 
-  if gateName.lower() in qasmOneQubitGateLabels:
     qubit        = gate.qubits[0] 
     qubitRegName = gQuantumCircuit.find_bit(qubit)[1][0][0].name
     qubitIndex   = gQuantumCircuit.find_bit(qubit).registers[0][1]
 
-    
-    print("Qubit          : ", qubit)
     print("Qubit Reg Name : " + qubitRegName)
     print("Qubit Index    : " + str(qubitIndex))
     
-    if len(gateParams) > 0:
-      if len(gateParams) == 3:
-         gateParamsTuple = (gateParams[0], gateParams[1], gateParams[2], thres)
+    if gateName.lower() in ["u3", "u", "u2", "u1"]:
+      if   len(gateParams) == 3:
+         gateParams2 = (gateParams[0], gateParams[1], gateParams[2], thres)
       elif len(gateParams) == 2:
-         gateParamsTuple = (math.pi/2.0,  gateParams[0], gateParams[1], thres)
+         gateParams2 = (  math.pi/2.0, gateParams[0], gateParams[1], thres)
       else:
-         gateParamsTuple = (0, 0, gateParams[0], thres)
-      matrix = qasmU3Matrix(*gateParamsTuple)
-      print("Tuple Params   : ", gateParamsTuple)
-      print("Matrix         :\n", matrix)
-      #qasmGateToProjectQ[gateName](matrix) | gRegisters[qubitRegName][qubitIndex] 
+         gateParams2 = ( 0000000000.0, 00000000000.0, gateParams[0], thres)
+      matrixParam = qasmU3Matrix(*gateParams2)
+      qasmGateToProjectQ[gateName](matrixParam)   | gRegisters[qubitRegName][qubitIndex] 
+    elif gateName in ["rx", "ry", "rz", "p"]:
+      qasmGateToProjectQ[gateName](gateParams[0]) | gRegisters[qubitRegName][qubitIndex] 
     else:
-      qasmGateToProjectQ[gateName] | gRegisters[qubitRegName][qubitIndex] 
+      qasmGateToProjectQ[gateName]                | gRegisters[qubitRegName][qubitIndex] 
+
     print("One Qubit Gate!")
+
   else:
     continue
     #print("Unknown 1-Qubit Gate.")
@@ -266,7 +277,7 @@ for regGroup in gRegisters:
   All(Measure) | gRegisters[regGroup]
 engine1.flush()
 
-'''
+
 observedString = ""                                                                                     
 for regGroup in gRegisters:                                                                             
   print("")                                                                                             
@@ -275,7 +286,7 @@ for regGroup in gRegisters:
     observedString += str(int(gRegisters[regGroup][index]))                                             
     print(f"Index = {index}, value = {int(gRegisters[regGroup][index])}")                            
 print("Observed String: ", observedString)                                                           
-'''
+
 
 
 

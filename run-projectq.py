@@ -213,7 +213,6 @@ for gate in gQuantumCircuit.data:
   gateNumQubits = gate.operation.num_qubits
   gateNumClbits = gate.operation.num_clbits
 
-
   # For Debugging
   if gateName in ["barrier", "measure"]:
     continue
@@ -223,7 +222,11 @@ for gate in gQuantumCircuit.data:
   print("Gate Parameters: " + str(gateParams))
   print("No. of Qubits  : " + str(gateNumQubits))
   print("No. of Clbits  : " + str(gateNumClbits))
-  
+
+  #==================================================#
+  # 1-Qubit Gate Translation                         #
+  #==================================================#  
+
   if gateName in qasmOneQubitGateLabels:
 
     qubit        = gate.qubits[0] 
@@ -232,26 +235,29 @@ for gate in gQuantumCircuit.data:
 
     print("Qubit Reg Name : " + qubitRegName)
     print("Qubit Index    : " + str(qubitIndex))
-    
+
+    # Case A: You need to define a matrix to accomodate the u-gate parameters.
     if gateName.lower() in ["u3", "u", "u2", "u1"]:
+
       if   len(gateParams) == 3:
          gateParams2 = (gateParams[0], gateParams[1], gateParams[2], thres)
       elif len(gateParams) == 2:
          gateParams2 = (  math.pi/2.0, gateParams[0], gateParams[1], thres)
       else:
          gateParams2 = ( 0000000000.0, 00000000000.0, gateParams[0], thres)
+
       matrixParam = qasmU3Matrix(*gateParams2)
       qasmGateToProjectQ[gateName](matrixParam)   | gRegisters[qubitRegName][qubitIndex] 
+
+    # CASE B: You need to provide an angle parameter to the gate.
     elif gateName in ["rx", "ry", "rz", "p"]:
       qasmGateToProjectQ[gateName](gateParams[0]) | gRegisters[qubitRegName][qubitIndex] 
+
+    # CASE C: No parameters. Apply the gate as is to the qubit.
     else:
       qasmGateToProjectQ[gateName]                | gRegisters[qubitRegName][qubitIndex] 
 
-    print("One Qubit Gate!")
 
-  else:
-    continue
-    #print("Unknown 1-Qubit Gate.")
 
 '''
   if gateName.lower() == "cx" or gateName.lower == "cnot":

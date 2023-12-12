@@ -118,8 +118,8 @@ def Example_004(index):
 
 def Example_005(index):
   sim  = Simulator()              # 'sim' rnd_seed is actually randomly generated.
-  eng  = MainEngine(backend=sim) # 'eng' will use 'sim' with random seed.
-  qreg = eng.allocate_qureg(5)   # Allocate 5-qubit register to 'eng'.
+  eng  = MainEngine(backend=sim)  # 'eng' will use 'sim' with random seed.
+  qreg = eng.allocate_qureg(5)    # Allocate 5-qubit register to 'eng'.
   All(H)       | qreg             # Apply the 'H' gate to all qubits in 'qreg'.
   eng.flush()                     # Flush.
   stateVector = eng.backend.cheat() 

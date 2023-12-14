@@ -172,40 +172,82 @@ def qasmU3Matrix ( _t, _p, _l, thres):
 thres = 0.0000000001
 #print(H.matrix)
 #print(myGate.matrix)
-print("Hadmard Matrix from U3:\n", qasmU3Matrix(math.pi/2.0, 0, math.pi, thres), "\n")
-print("NOT Matrix from U3:\n", qasmU3Matrix(math.pi, 0, math.pi, thres), "\n")
+#print("Hadmard Matrix from U3:\n", qasmU3Matrix(math.pi/2.0, 0, math.pi, thres), "\n")
+#print("NOT Matrix from U3:\n", qasmU3Matrix(math.pi, 0, math.pi, thres), "\n")
 
 idGate = MatrixGate([[1,0],
                      [0,1]])
 
 SqrtXdag = get_inverse(SqrtX)
 
+# Mapping of QASM gate labels to ProjectQ gate functions
 qasmGateToProjectQ = {
-"u3"      : MatrixGate,
-"u"       : MatrixGate,
-"u2"      : MatrixGate,
-"rx"      :         Rx,
-"ry"      :         Ry,
-"u1"      : MatrixGate,
-"p"       :         Ph,
-"rz"      :         Rz,
-"u0"      :     idGate, #
-"id"      :     idGate, #
-"t"       :          T, 
-"tdg"     :       Tdag, 
-"s"       :          S, 
-"sdg"     :       Sdag,
-"z"       :          Z, 
-"x"       :          X, 
-"y"       :          Y, 
-"h"       :          H, 
-"sx"      :      SqrtX,
-"sxdg"    :   SqrtXdag, #
-"barrier" :    Barrier,
-"measure" :    Measure,
+
+# qubits: 1, parameters: 0
+"u3"      :   MatrixGate,
+"u"       :   MatrixGate,
+"u2"      :   MatrixGate,
+"rx"      :           Rx,
+"ry"      :           Ry,
+"u1"      :   MatrixGate,
+"p"       :           Ph,
+"rz"      :           Rz,
+"u0"      :       idGate, # defined here
+"id"      :       idGate, # defined here
+"t"       :            T, 
+"tdg"     :         Tdag, 
+"s"       :            S, 
+"sdg"     :         Sdag,
+"z"       :            Z, 
+"x"       :            X, 
+"y"       :            Y, 
+"h"       :            H, 
+"sx"      :        SqrtX,
+"sxdg"    :     SqrtXdag, # defined here
+"barrier" :      Barrier,
+"measure" :      Measure,
+
+# qubits: 2, parameters: 0
+"cx"      :         C(X),
+"cz"      :         C(Z),
+"cy"      :         C(Y),
+"ch"      :         C(H),
+"csx"     :     C(SqrtX), 
+"swap"    :         Swap,  # to yet in test QASM
+
+# qubits: 2, parameters: 1
+"crx"     :    C(idGate), 
+"cry"     :    C(idGate),
+"crz"     :    C(idGate),
+"cp"      :    C(idGate),
+"cu1"     :    C(idGate),
+"rzz"     :    C(idGate),
+"rxx"     :    C(idGate),
+
+# qubits: 2, parameters: 3
+"cu3"     :    C(idGate),
+
+# qubits: 2, parameters: 4
+"cu"      :    C(idGate),
+
+# qubits: 3, parameters: 0
+"cswap"   :  C(idGate,2), # not yet in test QASM
+"ccx"     :  C(idGate,2),
+"rccx"    :  C(idGate,2),
+
+# qubits: 4, parameters: 0
+"rc3x"    :  C(idGate,3),
+"mcx"     :  C(idGate,3), #c3x in QASM, mcx = multi-control NOT
+"c3sqrtx" :  C(idGate,3),
+
+# qubits: 5, parameters: 0
+"mcx"     :  C(idGate,4), #c4x in QASM
+
 }
 
-gate = MatrixGate([[0, 1], [1, 0]])
+
+
+#gate = MatrixGate([[0, 1], [1, 0]])
 
 for gate in gQuantumCircuit.data:
   gateName      = gate.operation.name.lower()
@@ -218,6 +260,7 @@ for gate in gQuantumCircuit.data:
     continue
 
   print("\n")
+  print(gate)
   print("Gate Name      : " + gateName)
   print("Gate Parameters: " + str(gateParams))
   print("No. of Qubits  : " + str(gateNumQubits))
@@ -226,7 +269,6 @@ for gate in gQuantumCircuit.data:
   #==================================================#
   # 1-Qubit Gate Translation                         #
   #==================================================#  
-
   if gateName in qasmOneQubitGateLabels:
 
     qubit        = gate.qubits[0] 
@@ -256,6 +298,17 @@ for gate in gQuantumCircuit.data:
     # CASE C: No parameters. Apply the gate as is to the qubit.
     else:
       qasmGateToProjectQ[gateName]                | gRegisters[qubitRegName][qubitIndex] 
+
+  #==================================================#
+  # Multi-Qubit Gate Translation                     #
+  #==================================================#  
+  else:
+    print("MultiQubit Gate!")
+    qubit        = gate.qubits
+    print("Qubit          :", qubit)
+    #qubitRegName = gQuantumCircuit.find_bit(qubit)[1][0][0].name
+    #qubitIndex   = gQuantumCircuit.find_bit(qubit).registers[0][1]
+    
 
 
 

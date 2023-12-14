@@ -274,6 +274,7 @@ for gate in gQuantumCircuit.data:
     qubit        = gate.qubits[0] 
     qubitRegName = gQuantumCircuit.find_bit(qubit)[1][0][0].name
     qubitIndex   = gQuantumCircuit.find_bit(qubit).registers[0][1]
+    targetQubit  = gRegisters[qubitRegName][qubitIndex]
 
     print("Qubit Reg Name : " + qubitRegName)
     print("Qubit Index    : " + str(qubitIndex))
@@ -289,27 +290,73 @@ for gate in gQuantumCircuit.data:
          gateParams2 = ( 0000000000.0, 00000000000.0, gateParams[0], thres)
 
       matrixParam = qasmU3Matrix(*gateParams2)
-      qasmGateToProjectQ[gateName](matrixParam)   | gRegisters[qubitRegName][qubitIndex] 
+      projQGate   = qasmGateToProjectQ[gateName](matrixParam)
 
     # CASE B: You need to provide an angle parameter to the gate.
     elif gateName in ["rx", "ry", "rz", "p"]:
-      qasmGateToProjectQ[gateName](gateParams[0]) | gRegisters[qubitRegName][qubitIndex] 
+      projQGate   = qasmGateToProjectQ[gateName](gateParams[0])
 
     # CASE C: No parameters. Apply the gate as is to the qubit.
     else:
-      qasmGateToProjectQ[gateName]                | gRegisters[qubitRegName][qubitIndex] 
+      projQGate   = qasmGateToProjectQ[gateName]
+
+    projQGate | targetQubit
 
   #==================================================#
   # Multi-Qubit Gate Translation                     #
   #==================================================#  
   else:
     print("MultiQubit Gate!")
-    qubit        = gate.qubits
-    print("Qubit          :", qubit)
-    #qubitRegName = gQuantumCircuit.find_bit(qubit)[1][0][0].name
-    #qubitIndex   = gQuantumCircuit.find_bit(qubit).registers[0][1]
-    
+    qubits        = gate.qubits
+    print("Qubits          :", qubits)
+    qubitsTuple = ()
+    for aQubit in qubits:
+      qubitRegName = gQuantumCircuit.find_bit(aQubit)[1][0][0].name
+      qubitIndex   = gQuantumCircuit.find_bit(aQubit).registers[0][1]
+      theQubit     = gRegisters[qubitRegName][qubitIndex]
+      print("aQubit         :", aQubit)
+      print("Qubit Reg Name : " + qubitRegName)
+      print("Qubit Index    : " + str(qubitIndex))
+      print("theQubit       :", theQubit)
+      print("theQubit(type) :", type(theQubit))
+      qubitsTuple = qubitsTuple + (theQubit,)
 
+    print("qubitsTuple    :", qubitsTuple)
+    for pqQubit in qubitsTuple:
+      print("pqQubit        :", pqQubit)
+      print("pqQubit(type)  :", type(pqQubit))
+
+    if gateName == "mcx" and len(qubitsTuple) == 5:
+      print("Applying c4x   : GATE")
+      C(X,4) | qubitsTuple
+     
+      
+
+    '''
+    # CASE A:
+    a = 3
+    if gateName in [""]:
+      projQGate = qasmGateToProjectQ[gateName](matrixParam)
+      qubits    = () #tuple
+
+    # CASE B:
+    elif a==1:
+      projQGate = qasmGateToProjectQ[gateName](*gateParams)
+      qubits    = () #tuple
+
+    # CASE C:
+    elif a==2:
+      projQGate = qasmGateToProjectQ[gateName]
+      qubits        = gate.qubits
+
+    # CASE D:
+    else:
+      projQGate = qasmGateToProjectQ[gateName]
+      qubits        = gate.qubits
+  
+    projQGate | qubits 
+    '''
+    
 
 
 '''

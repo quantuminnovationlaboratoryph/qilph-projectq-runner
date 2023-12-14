@@ -213,35 +213,36 @@ qasmGateToProjectQ = {
 "cy"      :         C(Y),
 "ch"      :         C(H),
 "csx"     :     C(SqrtX), 
-"swap"    :         Swap,  # to yet in test QASM
+"swap"    :         Swap,
 
 # qubits: 2, parameters: 1
-"crx"     :    C(idGate), 
-"cry"     :    C(idGate),
-"crz"     :    C(idGate),
-"cp"      :    C(idGate),
-"cu1"     :    C(idGate),
-"rzz"     :    C(idGate),
-"rxx"     :    C(idGate),
+"crx"     :          Rx, ###
+"cry"     :          Ry, ###
+"crz"     :          Rz, ###
+"cp"      :          Ph, 
+"cu1"     :          Ph, # Add C, C(Ph)
+"rzz"     :          Rzz, ###
+"rxx"     :          Rxx, ###
 
 # qubits: 2, parameters: 3
-"cu3"     :    C(idGate),
+"cu3"     :    C(idGate), ###
 
 # qubits: 2, parameters: 4
-"cu"      :    C(idGate),
+"cu"      :    C(idGate), ###
 
 # qubits: 3, parameters: 0
-"cswap"   :  C(idGate,2), # not yet in test QASM
-"ccx"     :  C(idGate,2),
-"rccx"    :  C(idGate,2),
+"cswap"   :      C(Swap),
+"ccx"     :      Toffoli,
+"rccx"    :  C(idGate,2), ###
 
 # qubits: 4, parameters: 0
-"rc3x"    :  C(idGate,3),
-"mcx"     :  C(idGate,3), #c3x in QASM, mcx = multi-control NOT
-"c3sqrtx" :  C(idGate,3),
+"rc3x"    :  C(idGate,3), ###
+"rcccx"   :  C(idGate,3), ###
+"c3x"     :       C(X,3), #c3x in QASM, mcx = multi-control NOT
+"c3sx"    :   C(SqrtX,3),
 
 # qubits: 5, parameters: 0
-"mcx"     :  C(idGate,4), #c4x in QASM
+"c4x"     :       C(X,4), #c4x in QASM
 
 }
 
@@ -254,6 +255,7 @@ for gate in gQuantumCircuit.data:
   gateParams    = gate.operation.params
   gateNumQubits = gate.operation.num_qubits
   gateNumClbits = gate.operation.num_clbits
+  gateQubits    = gate.qubits
 
   # For Debugging
   if gateName in ["barrier", "measure"]:
@@ -271,7 +273,7 @@ for gate in gQuantumCircuit.data:
   #==================================================#  
   if gateName in qasmOneQubitGateLabels:
 
-    qubit        = gate.qubits[0] 
+    qubit        = gateQubits[0] 
     qubitRegName = gQuantumCircuit.find_bit(qubit)[1][0][0].name
     qubitIndex   = gQuantumCircuit.find_bit(qubit).registers[0][1]
     targetQubit  = gRegisters[qubitRegName][qubitIndex]
@@ -307,28 +309,49 @@ for gate in gQuantumCircuit.data:
   #==================================================#  
   else:
     print("MultiQubit Gate!")
-    qubits        = gate.qubits
-    print("Qubits          :", qubits)
+    print("Qubits          :", gateQubits)
+
     qubitsTuple = ()
-    for aQubit in qubits:
+    for aQubit in gateQubits:
       qubitRegName = gQuantumCircuit.find_bit(aQubit)[1][0][0].name
       qubitIndex   = gQuantumCircuit.find_bit(aQubit).registers[0][1]
       theQubit     = gRegisters[qubitRegName][qubitIndex]
-      print("aQubit         :", aQubit)
-      print("Qubit Reg Name : " + qubitRegName)
-      print("Qubit Index    : " + str(qubitIndex))
-      print("theQubit       :", theQubit)
-      print("theQubit(type) :", type(theQubit))
-      qubitsTuple = qubitsTuple + (theQubit,)
+      qubitsTuple  = qubitsTuple + (theQubit,)
+      if debug==True:
+        print("aQubit         :", aQubit)
+        print("Qubit Reg Name : " + qubitRegName)
+        print("Qubit Index    : " + str(qubitIndex))
+        print("theQubit       :", theQubit)
+        print("theQubit(type) :", type(theQubit))
 
-    print("qubitsTuple    :", qubitsTuple)
-    for pqQubit in qubitsTuple:
-      print("pqQubit        :", pqQubit)
-      print("pqQubit(type)  :", type(pqQubit))
+    if debug==True:
+      print("qubitsTuple    :", qubitsTuple)
+      for pqQubit in qubitsTuple:
+        print("pqQubit        :", pqQubit)
+        print("pqQubit(type)  :", type(pqQubit))
 
-    if gateName == "mcx" and len(qubitsTuple) == 5:
-      print("Applying c4x   : GATE")
-      C(X,4) | qubitsTuple
+    paramsCount = len(gateParams)
+
+    # CASE: Gates with no parameters
+    if   paramsCount == 0:
+      print("paramsCount =", paramsCount)
+      if gateName == "mcx":
+        gateName = "c3x" if len(qubitsTuple) == 4  else "c4x"
+      projQGate  = qasmGateToProjectQ[gateName]
+      projQGate  | qubitsTuple
+    
+    # CASE: Gates with 1 parameter (angle) 
+    elif paramsCount == 1:
+      print("paramsCount =", paramsCount)
+      angleParam = gateParams[0] 
+      if gateName in ["rxx", "rzz"]:
+        projQGate  = qasmGateToProjectQ[gateName](angleParam)
+      else:
+        projQGate  = C(qasmGateToProjectQ[gateName](angleParam))
+      projQGate  | qubitsTuple
+    else:
+      continue
+    
      
       
 

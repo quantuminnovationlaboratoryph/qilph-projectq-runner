@@ -153,20 +153,20 @@ SqrtXdag = get_inverse(SqrtX)
 qasmGateToProjectQ = {
 # qubits: 1, parameters: 3
 
-"u3"      :   MatrixGate,  # CASE: A
-"u"       :   MatrixGate,  # CASE: A
+"u3"      :   MatrixGate,  # CASE: A1
+"u"       :   MatrixGate,  # CASE: A1
 
 # qubits: 1, parameters: 2
 
-"u2"      :   MatrixGate,  # CASE: A
+"u2"      :   MatrixGate,  # CASE: A1
 
 # qubits: 1, parameters: 1
 
-"rx"      :           Rx,
-"ry"      :           Ry,
-"u1"      :   MatrixGate,
-"p"       :           Ph,
-"rz"      :           Rz,
+"rx"      :           Rx,  # CASE: C1
+"ry"      :           Ry,  # CASE: C1
+"u1"      :   MatrixGate,  # CASE: A1
+"p"       :           Ph,  # CASE: C1
+"rz"      :           Rz,  # CASE: C1
 
 # qubits: 1, parameters: 0
 
@@ -196,21 +196,21 @@ qasmGateToProjectQ = {
 
 # qubits: 2, parameters: 1
 
-"crx"     :           Rx,
-"cry"     :           Ry,
-"crz"     :           Rz,
-"cp"      :           Ph, 
-"cu1"     :           Ph,
-"rzz"     :          Rzz, 
-"rxx"     :          Rxx,
+"crx"     :           Rx,  # CASE: C2
+"cry"     :           Ry,  # CASE: C2
+"crz"     :           Rz,  # CASE: C2
+"cp"      :           Ph,  # CASE: C2
+"cu1"     :           Ph,  # CASE: C2
+"rzz"     :          Rzz,  # CASE: C1 
+"rxx"     :          Rxx,  # CASE: C1
 
 # qubits: 2, parameters: 3
 
-"cu3"     :   MatrixGate,  # CASE: A
+"cu3"     :   MatrixGate,  # CASE: A2
 
 # qubits: 2, parameters: 4
 
-"cu"      :   MatrixGate,  # CASE: A
+"cu"      :   MatrixGate,  # CASE: A2
 
 # qubits: 3, parameters: 0
 
@@ -284,7 +284,6 @@ for gate in gQuantumCircuit.data:
   #================================================#
 
   if gateName in ["u3", "u2", "u1", "u", "cu3", "cu"]:
-    print("CASE           : A")
     if   len(gateParams) >= 3:
        gateParams2 = (gateParams[0], gateParams[1], gateParams[2], thres)
     elif len(gateParams) == 2:
@@ -294,8 +293,10 @@ for gate in gQuantumCircuit.data:
     matrixParam = qasmU3Matrix(*gateParams2)
     
     if "c" in gateName:
+      print("CASE           : A2")
       projQGate   = C(qasmGateToProjectQ[gateName](matrixParam))
     else:
+      print("CASE           : A1")
       projQGate   = qasmGateToProjectQ[gateName](matrixParam)
     
     projQGate  | qubitsTuple
@@ -306,7 +307,6 @@ for gate in gQuantumCircuit.data:
   #================================================#
   if   paramsCount == 0 or gateName == "u0":
     print("CASE           : B")
-    print("gateName       : ", "["+gateName+"]")
     if gateName == "mcx":
       gateName = "c3x" if len(qubitsTuple) == 4  else "c4x"
     projQGate  = qasmGateToProjectQ[gateName]
@@ -318,11 +318,12 @@ for gate in gQuantumCircuit.data:
   # CASE C: Gates with a single 'angle' parameter  #
   #================================================#
   if paramsCount == 1:
-    print("CASE           : C")
     angleParam = gateParams[0] 
     if gateName in ["rxx", "rzz"] + ["rx", "ry", "rz", "p"]:
+      print("CASE           : C1")
       projQGate  = qasmGateToProjectQ[gateName](angleParam)
     else:
+      print("CASE           : C2")
       projQGate  = C(qasmGateToProjectQ[gateName](angleParam))
     projQGate  | qubitsTuple
     continue
